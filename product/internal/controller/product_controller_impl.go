@@ -84,6 +84,21 @@ func (controller ProductControllerImpl) Update(ctx *fiber.Ctx) error {
 		})
 	}
 
+	imgProd, _ := ctx.FormFile("image")
+	if imgProd != nil {
+		fileExt := filepath.Ext(imgProd.Filename)
+
+		fileName := strings.TrimSuffix(imgProd.Filename, fileExt)
+
+		currentTime := time.Now().Format("20060102150405")
+		fileNameWithTime := fmt.Sprintf("%s-%s", fileName, currentTime)
+		newFileName := fmt.Sprintf("%s%s", fileNameWithTime, fileExt)
+
+		imgProd.Filename = newFileName
+		productRequest.Image = imgProd.Filename
+		_ = ctx.SaveFile(imgProd, fmt.Sprintf("./public/product/%s", imgProd.Filename))
+	}
+
 	if err := controller.Validator.Struct(productRequest); err != nil {
 		return ctx.Status(fiber.StatusBadRequest).JSON(web.ErrorResponse{
 			Code:    fiber.StatusBadRequest,

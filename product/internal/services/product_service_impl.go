@@ -3,6 +3,8 @@ package services
 import (
 	"fmt"
 	"gorm.io/gorm"
+	"os"
+	"path"
 	"product/internal/config"
 	"product/internal/exception"
 	"product/internal/helper"
@@ -58,10 +60,20 @@ func (service ProductServiceImpl) Update(request web.ProductUpdateRequest) (*web
 		return nil, &exception.ErrorMessage{Message: err.Error()}
 	}
 
+	if request.Image == "" {
+		request.Image = productFounded.Image
+	}
+
+	if productFounded.Image != request.Image {
+		_ = os.Remove("./public/product/" + path.Base(productFounded.Image))
+		productFounded.Image = request.Image
+	} else {
+		productFounded.Image = productFounded.Image
+	}
+
 	productFounded.Name = request.Name
 	productFounded.Quantity = request.Quantity
 	productFounded.Price = request.Price
-	productFounded.Image = request.Image
 	productFounded.UpdatedAt = time.Now()
 
 	productUpdate, err := service.Repository.Update(db, productFounded)
@@ -85,6 +97,8 @@ func (service ProductServiceImpl) Delete(productId int) error {
 	if err != nil {
 		return &exception.ErrorMessage{Message: "cant delete the product"}
 	}
+
+	_ = os.Remove("./public/product/" + path.Base(productFounded.Image))
 
 	return nil
 }
